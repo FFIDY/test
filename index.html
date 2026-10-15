@@ -1,0 +1,2266 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>공동주택 세대점검 현황관리 시스템</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --primary: #1f4e79;
+      --primary-dark: #163a59;
+      --secondary: #eaf2f8;
+      --accent: #2e86de;
+      --success: #1e8449;
+      --warning: #d68910;
+      --danger: #c0392b;
+      --info: #6c5ce7;
+      --gray-50: #fbfcfe;
+      --gray-100: #f7f9fb;
+      --gray-200: #ecf0f3;
+      --gray-300: #d5dbe1;
+      --gray-400: #b8c2cc;
+      --gray-500: #7f8c8d;
+      --gray-700: #4d5656;
+      --text: #1f2d3d;
+      --white: #ffffff;
+      --shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+      --sidebar: 260px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: "Malgun Gothic", "Apple SD Gothic Neo", Arial, sans-serif;
+      background: var(--gray-100);
+      color: var(--text);
+    }
+
+    .hidden { display: none !important; }
+
+    .login-wrap {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: linear-gradient(135deg, #eaf2f8, #f7f9fb);
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 540px;
+      background: #fff;
+      border-radius: 20px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+      padding: 32px;
+    }
+
+    .login-card h1 {
+      margin: 0 0 10px;
+      color: var(--primary-dark);
+      font-size: 28px;
+    }
+
+    .login-card p {
+      margin: 0 0 20px;
+      color: var(--gray-700);
+      line-height: 1.7;
+      font-size: 14px;
+    }
+
+    .demo-account {
+      background: #f4f8fb;
+      border: 1px solid #d7e3ee;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.7;
+      margin-top: 16px;
+      white-space: pre-line;
+    }
+
+    .app-shell {
+      display: flex;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      width: var(--sidebar);
+      background: linear-gradient(180deg, var(--primary-dark), var(--primary));
+      color: #fff;
+      padding: 24px 18px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+    }
+
+    .sidebar h2 {
+      font-size: 20px;
+      margin: 0 0 8px;
+    }
+
+    .sidebar .sub {
+      font-size: 12px;
+      opacity: 0.85;
+      margin-bottom: 24px;
+      line-height: 1.6;
+    }
+
+    .nav-group {
+      display: grid;
+      gap: 8px;
+    }
+
+    .nav-btn {
+      width: 100%;
+      text-align: left;
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 12px 14px;
+      cursor: pointer;
+      font-weight: 700;
+    }
+
+    .nav-btn.active {
+      background: #fff;
+      color: var(--primary-dark);
+    }
+
+    .app-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .container {
+      padding: 24px;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+      color: var(--white);
+      padding: 24px 28px;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 20px;
+      flex-wrap: wrap;
+    }
+
+    .header h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+    }
+
+    .header p {
+      margin: 4px 0;
+      opacity: 0.96;
+    }
+
+    .status-save {
+      background: rgba(255,255,255,0.14);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+    }
+
+    .user-chip {
+      background: rgba(255,255,255,0.14);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      margin-bottom: 10px;
+      display: inline-block;
+    }
+
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: var(--shadow);
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      margin: 0 0 16px;
+      font-size: 20px;
+      color: var(--primary-dark);
+    }
+
+    .grid-cards {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .stat-card h3 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      color: var(--gray-500);
+      font-weight: 600;
+    }
+
+    .stat-card .value {
+      font-size: 30px;
+      font-weight: 700;
+      margin-bottom: 6px;
+    }
+
+    .stat-card .sub {
+      font-size: 13px;
+      color: var(--gray-700);
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 380px 1fr;
+      gap: 20px;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .chart-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .chart-collapsed {
+      display: none;
+    }
+
+    .chart-box {
+      height: 320px;
+    }
+
+    .inline-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .form-group {
+      margin-bottom: 14px;
+    }
+
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="date"],
+    input[type="tel"],
+    input[type="number"],
+    input[type="file"],
+    input[type="email"],
+    textarea,
+    select {
+      width: 100%;
+      padding: 11px 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 10px;
+      font-size: 14px;
+      background: #fff;
+    }
+
+    textarea {
+      resize: vertical;
+      min-height: 90px;
+    }
+
+    .facility-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .facility-item {
+      background: var(--secondary);
+      padding: 10px 12px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+    }
+
+    .btn-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    button {
+      border: none;
+      border-radius: 10px;
+      padding: 11px 16px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .btn-primary { background: var(--primary); color: white; }
+    .btn-primary:hover { background: var(--primary-dark); }
+    .btn-secondary { background: var(--gray-200); color: var(--text); }
+    .btn-success { background: var(--success); color: white; }
+    .btn-warning { background: var(--warning); color: white; }
+    .btn-danger { background: var(--danger); color: white; }
+    .btn-info { background: var(--info); color: white; }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 14px;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      max-height: 620px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 1050px;
+      background: white;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--gray-200);
+      text-align: left;
+      font-size: 14px;
+      vertical-align: middle;
+    }
+
+    th {
+      background: #f0f5fa;
+      color: var(--primary-dark);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    tr:hover td {
+      background: #fafcff;
+    }
+
+    .pagination {
+      margin-top: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .page-controls {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .done { background: #d5f5e3; color: #145a32; }
+    .planned { background: #d6eaf8; color: #1b4f72; }
+    .absent { background: #fdebd0; color: #9c640c; }
+    .revisit { background: #f9d6d5; color: #922b21; }
+    .refused { background: #ebdef0; color: #6c3483; }
+    .vacant { background: #e5e7eb; color: #374151; }
+
+    .mini {
+      font-size: 12px;
+      color: var(--gray-500);
+      line-height: 1.6;
+    }
+
+    .footer-note {
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--gray-500);
+      line-height: 1.6;
+    }
+
+    .notice-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .notice-item {
+      padding: 16px;
+      border: 1px solid #dce4ec;
+      border-radius: 12px;
+      background: #fff;
+    }
+
+    .notice-title {
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--primary-dark);
+    }
+
+    .notice-meta {
+      font-size: 12px;
+      color: var(--gray-500);
+      margin-bottom: 8px;
+    }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      padding: 20px;
+    }
+
+    .modal.show {
+      display: flex;
+    }
+
+    .modal-content {
+      width: min(1200px, 96vw);
+      max-height: 92vh;
+      overflow: auto;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+      padding: 24px;
+    }
+
+    .modal-small {
+      width: min(640px, 96vw);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .close-btn {
+      background: var(--gray-200);
+      color: var(--text);
+    }
+
+    .progress-wrap {
+      margin-top: 12px;
+      background: #eef3f8;
+      border-radius: 999px;
+      height: 18px;
+      overflow: hidden;
+      border: 1px solid #d7e1eb;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--primary));
+      transition: width 0.2s ease;
+    }
+
+    .progress-text {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--gray-700);
+    }
+
+    .preview-box {
+      margin-top: 16px;
+      border: 1px solid var(--gray-200);
+      border-radius: 10px;
+      overflow: auto;
+      max-height: 280px;
+    }
+
+    .info-msg {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      background: #eef6ff;
+      color: #1b4f72;
+    }
+
+    .warn-msg {
+      margin-top: 10px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      background: #fff4e5;
+      color: #9c640c;
+      display: none;
+    }
+
+    @media (max-width: 1400px) {
+      .grid-cards { grid-template-columns: repeat(3, 1fr); }
+      .chart-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 1100px) {
+      .app-shell { display: block; }
+      .sidebar {
+        width: 100%;
+        height: auto;
+        position: static;
+      }
+      .layout { grid-template-columns: 1fr; }
+    }
+
+    @media (max-width: 768px) {
+      .grid-cards { grid-template-columns: 1fr; }
+      .inline-grid, .facility-list { grid-template-columns: 1fr; }
+      .header h1 { font-size: 22px; }
+    }
+
+    @media print {
+      body { background: white; }
+      .sidebar, .btn-row, .toolbar, .action-col, .no-print, .pagination, .modal, #logoutBtn {
+        display: none !important;
+      }
+      .card, .header {
+        box-shadow: none;
+        border: 1px solid #ddd;
+      }
+      .layout, .chart-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="loginPage" class="login-wrap">
+    <div class="login-card">
+      <h1>공동주택 세대점검 현황관리</h1>
+      <p>관리사무소와 소방서 담당자가 공동주택 세대점검 현황을 조회·관리하는 시연용 화면입니다.</p>
+
+      <div class="form-group">
+        <label for="loginId">아이디</label>
+        <input type="text" id="loginId" placeholder="아이디 입력" />
+      </div>
+
+      <div class="form-group">
+        <label for="loginPw">비밀번호</label>
+        <input type="password" id="loginPw" placeholder="비밀번호 입력" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" onclick="login()">로그인</button>
+        <button class="btn-secondary" onclick="showRegisterPage()">회원가입</button>
+      </div>
+
+      <div class="demo-account">시연용 계정
+- 관리사무소(대구행복아파트): office1 / 1234
+- 관리사무소(동대구푸르지오): office2 / 1234
+- 소방서 담당자: fireadmin / 1234</div>
+    </div>
+  </div>
+
+  <div id="registerPage" class="login-wrap hidden">
+    <div class="login-card">
+      <h1>회원가입</h1>
+      <p>관리사무소용 시연 계정을 등록하는 예시 화면입니다.</p>
+
+      <div class="form-group">
+        <label for="regLoginId">아이디</label>
+        <input type="text" id="regLoginId" placeholder="예: office3" />
+      </div>
+
+      <div class="form-group">
+        <label for="regPassword">비밀번호</label>
+        <input type="password" id="regPassword" placeholder="비밀번호 입력" />
+      </div>
+
+      <div class="form-group">
+        <label for="regUserName">관리사무소명</label>
+        <input type="text" id="regUserName" placeholder="예: 수성행복아파트 관리사무소" />
+      </div>
+
+      <div class="form-group">
+        <label for="regComplexName">아파트명</label>
+        <input type="text" id="regComplexName" placeholder="예: 수성행복아파트" />
+      </div>
+
+      <div class="form-group">
+        <label for="regAddress">주소</label>
+        <input type="text" id="regAddress" placeholder="예: 대구광역시 수성구 예시로 789" />
+      </div>
+
+      <div class="form-group">
+        <label for="regOfficePhone">관리사무소 전화번호</label>
+        <input type="text" id="regOfficePhone" placeholder="예: 053-000-0000" />
+      </div>
+
+      <div class="form-group">
+        <label for="regManagerName">담당자명</label>
+        <input type="text" id="regManagerName" placeholder="예: 김담당" />
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" onclick="registerUser()">회원가입 완료</button>
+        <button class="btn-secondary" onclick="showLoginPage()">로그인으로 돌아가기</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="appPage" class="hidden">
+    <div class="app-shell">
+      <aside class="sidebar no-print">
+        <h2>현황관리 시스템</h2>
+        <div class="sub">공동주택 세대점검 운영형 시연 대시보드</div>
+
+        <div class="nav-group">
+          <button class="nav-btn active" onclick="showView('dashboardView', this)">현황관리</button>
+          <button class="nav-btn" onclick="showView('statsView', this)">통계</button>
+          <button class="nav-btn" onclick="showView('noticeView', this)">공지사항</button>
+          <button class="nav-btn" onclick="showView('approvalView', this)">회원가입 승인</button>
+        </div>
+      </aside>
+
+      <main class="app-main">
+        <div class="container">
+          <div class="header">
+            <div class="header-top">
+              <div>
+                <div class="user-chip" id="userInfoText">로그인 사용자</div>
+                <h1>공동주택 세대점검 현황관리</h1>
+                <p id="complexTitle">단지명: -</p>
+                <p id="baseDateText">기준일: -</p>
+              </div>
+              <div>
+                <div class="status-save" id="saveStatus" style="margin-bottom:10px;">저장 상태: 로컬 저장 활성화</div>
+                <div class="btn-row" style="justify-content:flex-end; margin-top:0;">
+                  <button class="btn-secondary no-print" id="logoutBtn" onclick="logout()">로그아웃</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <section id="dashboardView">
+            <div class="card no-print">
+              <h2 class="section-title">조회 단지 선택</h2>
+
+              <div class="inline-grid">
+                <div class="form-group">
+                  <label for="complexSelector">단지 선택</label>
+                  <select id="complexSelector" onchange="changeComplex()"></select>
+                </div>
+                <div class="form-group">
+                  <label>권한 안내</label>
+                  <input type="text" id="roleGuide" readonly />
+                </div>
+              </div>
+            </div>
+
+            <div class="grid-cards">
+              <div class="card stat-card">
+                <h3>총 세대수</h3>
+                <div class="value" id="totalHouseholds">0</div>
+                <div class="sub">등록 세대 전체</div>
+              </div>
+              <div class="card stat-card">
+                <h3>공실</h3>
+                <div class="value" id="vacantHouseholds">0</div>
+                <div class="sub">점검대상 제외</div>
+              </div>
+              <div class="card stat-card">
+                <h3>점검대상</h3>
+                <div class="value" id="targetHouseholds">0</div>
+                <div class="sub">공실 제외 세대</div>
+              </div>
+              <div class="card stat-card">
+                <h3>점검 완료</h3>
+                <div class="value" id="completedHouseholds">0</div>
+                <div class="sub">완료 처리 세대</div>
+              </div>
+              <div class="card stat-card">
+                <h3>미점검</h3>
+                <div class="value" id="pendingHouseholds">0</div>
+                <div class="sub">점검대상 중 완료 외</div>
+              </div>
+              <div class="card stat-card">
+                <h3>진행률</h3>
+                <div class="value" id="progressRate">0%</div>
+                <div class="sub">완료/점검대상</div>
+              </div>
+            </div>
+
+            <div class="layout">
+              <div>
+                <div class="card">
+                  <h2 class="section-title">기본정보</h2>
+
+                  <div class="form-group">
+                    <label for="complexName">단지명</label>
+                    <input type="text" id="complexName" />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="address">주소</label>
+                    <input type="text" id="address" />
+                  </div>
+
+                  <div class="inline-grid">
+                    <div class="form-group">
+                      <label for="officePhone">관리사무소 전화번호</label>
+                      <input type="tel" id="officePhone" />
+                    </div>
+                    <div class="form-group">
+                      <label for="managerName">담당자명</label>
+                      <input type="text" id="managerName" />
+                    </div>
+                  </div>
+
+                  <div class="inline-grid">
+                    <div class="form-group">
+                      <label for="inspectionDate">점검 기준일</label>
+                      <input type="date" id="inspectionDate" />
+                    </div>
+                    <div class="form-group">
+                      <label for="memo">비고</label>
+                      <input type="text" id="memo" />
+                    </div>
+                  </div>
+
+                  <div class="btn-row">
+                    <button class="btn-primary" id="saveBasicInfoBtn" onclick="saveBasicInfo()">기본정보 저장</button>
+                    <button class="btn-secondary" onclick="window.print()">인쇄</button>
+                  </div>
+                </div>
+
+                <div class="card">
+                  <h2 class="section-title">소방시설 현황</h2>
+
+                  <div class="facility-list">
+                    <label class="facility-item"><input type="checkbox" class="facility" value="소화기"> 소화기</label>
+                    <label class="facility-item"><input type="checkbox" class="facility" value="옥내소화전"> 옥내소화전</label>
+                    <label class="facility-item"><input type="checkbox" class="facility" value="자동화재탐지설비"> 자동화재탐지설비</label>
+                    <label class="facility-item"><input type="checkbox" class="facility" value="스프링클러설비"> 스프링클러설비</label>
+                    <label class="facility-item"><input type="checkbox" class="facility" value="비상방송설비"> 비상방송설비</label>
+                    <label class="facility-item"><input type="checkbox" class="facility" value="유도등"> 유도등</label>
+                    <label class="facility-item"><input type="checkbox" class="facility" value="완강기"> 완강기</label>
+                    <label class="facility-item"><input type="checkbox" class="facility" value="제연설비"> 제연설비</label>
+                  </div>
+
+                  <div class="form-group" style="margin-top:14px;">
+                    <label for="facilityNote">시설 메모</label>
+                    <textarea id="facilityNote" placeholder="예: 101동 옥내소화전 점검 완료"></textarea>
+                  </div>
+
+                  <div class="btn-row">
+                    <button class="btn-primary" id="saveFacilitiesBtn" onclick="saveFacilities()">소방시설 저장</button>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <div class="card">
+                  <h2 class="section-title">세대 점검 현황</h2>
+
+                  <div class="toolbar">
+                    <div class="toolbar-left">
+                      <input type="text" id="searchInput" placeholder="동, 호수, 특이사항 검색" oninput="renderTable()" />
+                      <select id="statusFilter" onchange="renderTable()">
+                        <option value="">전체 상태</option>
+                        <option value="완료">완료</option>
+                        <option value="예정">예정</option>
+                        <option value="부재">부재</option>
+                        <option value="재방문 필요">재방문 필요</option>
+                        <option value="미동의">미동의</option>
+                        <option value="공실(미입주)">공실(미입주)</option>
+                      </select>
+                    </div>
+                    <div class="toolbar-right no-print">
+                      <button class="btn-info" id="excelUploadBtn" onclick="openUploadModal()">엑셀 업로드</button>
+                      <button class="btn-success" id="addRowBtn" onclick="openHouseholdModal('add')">세대 추가</button>
+                      <button class="btn-secondary" onclick="downloadCSV()">CSV 내보내기</button>
+                      <button class="btn-warning" onclick="loadSampleData()">샘플데이터 불러오기</button>
+                      <button class="btn-danger" onclick="resetCurrentComplex()">현재 단지 초기화</button>
+                    </div>
+                  </div>
+
+                  <div class="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>동</th>
+                          <th>호수</th>
+                          <th>라인</th>
+                          <th>점검상태</th>
+                          <th>점검일</th>
+                          <th>특이사항</th>
+                          <th class="action-col">관리</th>
+                        </tr>
+                      </thead>
+                      <tbody id="inspectionTableBody"></tbody>
+                    </table>
+                  </div>
+
+                  <div class="pagination">
+                    <div id="pageInfo" class="mini">페이지 정보</div>
+                    <div class="page-controls no-print">
+                      <button class="btn-secondary" onclick="changePage(-1)">이전</button>
+                      <select id="pageSize" onchange="changePageSize()">
+                        <option value="10">10건</option>
+                        <option value="20" selected>20건</option>
+                        <option value="50">50건</option>
+                        <option value="100">100건</option>
+                      </select>
+                      <button class="btn-secondary" onclick="changePage(1)">다음</button>
+                    </div>
+                  </div>
+
+                  <div class="footer-note">
+                    ※ 공실(미입주) 세대는 점검대상에서 제외되며, 진행률 산정 시 분모에서 제외됩니다.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section id="statsView" class="hidden">
+            <div class="chart-grid">
+              <div class="card">
+                <div class="chart-header">
+                  <h2 class="section-title" style="margin:0;">점검상태 분포</h2>
+                  <button class="btn-secondary" id="toggleBtn_statusSection" onclick="toggleChartSection('statusSection')">접기</button>
+                </div>
+                <div class="chart-box" id="statusSection">
+                  <canvas id="statusChart"></canvas>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="chart-header">
+                  <h2 class="section-title" style="margin:0;">동별 완료율</h2>
+                  <button class="btn-secondary" id="toggleBtn_dongSection" onclick="toggleChartSection('dongSection')">접기</button>
+                </div>
+                <div class="chart-box" id="dongSection">
+                  <canvas id="dongChart"></canvas>
+                </div>
+              </div>
+
+              <div class="card">
+                <div class="chart-header">
+                  <h2 class="section-title" style="margin:0;">라인별 세대 수</h2>
+                  <button class="btn-secondary" id="toggleBtn_lineSection" onclick="toggleChartSection('lineSection')">접기</button>
+                </div>
+                <div class="chart-box" id="lineSection">
+                  <canvas id="lineChart"></canvas>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <h2 class="section-title">통계 설명</h2>
+              <div class="mini">
+                - 점검상태 분포: 현재 필터 기준 상태별 세대 수<br>
+                - 동별 완료율: 공실 제외 점검대상 기준 완료율<br>
+                - 라인별 세대 수: 호수 끝 2자리 기준 집계
+              </div>
+            </div>
+          </section>
+
+          <section id="noticeView" class="hidden">
+            <div class="card">
+              <h2 class="section-title">공지사항</h2>
+              <div class="notice-list" id="noticeList"></div>
+
+              <div class="btn-row no-print">
+                <button class="btn-primary" id="addNoticeBtn" onclick="openNoticeModal('add')">공지 추가</button>
+              </div>
+            </div>
+          </section>
+
+          <section id="approvalView" class="hidden">
+            <div class="card">
+              <h2 class="section-title">회원가입 승인</h2>
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>아이디</th>
+                      <th>관리사무소명</th>
+                      <th>아파트명</th>
+                      <th>상태</th>
+                      <th>신청일</th>
+                      <th class="action-col">관리</th>
+                    </tr>
+                  </thead>
+                  <tbody id="approvalTableBody"></tbody>
+                </table>
+              </div>
+              <div class="footer-note">
+                ※ 시연용 기능입니다. 실제 운영에서는 서버 승인 절차와 로그 관리가 필요합니다.
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <div class="modal" id="uploadModal">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 class="section-title" style="margin:0;">엑셀/CSV 세대 일괄 업로드</h2>
+          <button class="close-btn" onclick="closeUploadModal()">닫기</button>
+        </div>
+
+        <div class="form-group">
+          <label for="excelFile">업로드 파일 선택</label>
+          <input type="file" id="excelFile" accept=".xlsx,.xls,.csv" />
+        </div>
+
+        <div class="mini">
+          권장 컬럼명: 동, 호수, 점검상태, 점검일, 특이사항
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-primary" onclick="readExcelFile()">파일 읽기</button>
+          <button class="btn-success" onclick="applyImportedData('append')">기존 목록에 추가</button>
+          <button class="btn-warning" onclick="applyImportedData('replace')">전체 대체</button>
+          <button class="btn-info" onclick="applyImportedData('upsert')">중복 업데이트</button>
+          <button class="btn-secondary" onclick="downloadTemplateCSV()">양식 CSV 다운로드</button>
+        </div>
+
+        <div class="progress-wrap">
+          <div class="progress-bar" id="uploadProgressBar"></div>
+        </div>
+        <div class="progress-text" id="uploadProgressText">대기 중</div>
+
+        <div class="info-msg" id="importInfo">업로드 파일을 선택한 뒤 [파일 읽기]를 누르세요.</div>
+        <div class="warn-msg" id="importWarn"></div>
+
+        <div class="preview-box">
+          <table>
+            <thead>
+              <tr>
+                <th>동</th>
+                <th>호수</th>
+                <th>점검상태</th>
+                <th>점검일</th>
+                <th>특이사항</th>
+              </tr>
+            </thead>
+            <tbody id="previewTableBody">
+              <tr><td colspan="5" style="text-align:center;">미리보기 데이터가 없습니다.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="householdModal">
+      <div class="modal-content modal-small">
+        <div class="modal-header">
+          <h2 class="section-title" id="householdModalTitle" style="margin:0;">세대 추가</h2>
+          <button class="close-btn" onclick="closeHouseholdModal()">닫기</button>
+        </div>
+
+        <div class="form-group">
+          <label for="modalDong">동</label>
+          <input type="text" id="modalDong" placeholder="예: 101" />
+        </div>
+
+        <div class="form-group">
+          <label for="modalUnit">호수</label>
+          <input type="text" id="modalUnit" placeholder="예: 1001" />
+        </div>
+
+        <div class="form-group">
+          <label for="modalStatus">점검상태</label>
+          <select id="modalStatus">
+            <option value="완료">완료</option>
+            <option value="예정">예정</option>
+            <option value="부재">부재</option>
+            <option value="재방문 필요">재방문 필요</option>
+            <option value="미동의">미동의</option>
+            <option value="공실(미입주)">공실(미입주)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="modalDate">점검일</label>
+          <input type="date" id="modalDate" />
+        </div>
+
+        <div class="form-group">
+          <label for="modalNote">특이사항</label>
+          <textarea id="modalNote" placeholder="특이사항 입력"></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-primary" onclick="saveHouseholdModal()">저장</button>
+          <button class="btn-secondary" onclick="closeHouseholdModal()">취소</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal" id="noticeModal">
+      <div class="modal-content modal-small">
+        <div class="modal-header">
+          <h2 class="section-title" id="noticeModalTitle" style="margin:0;">공지 추가</h2>
+          <button class="close-btn" onclick="closeNoticeModal()">닫기</button>
+        </div>
+
+        <div class="form-group">
+          <label for="noticeTitleInput">제목</label>
+          <input type="text" id="noticeTitleInput" />
+        </div>
+
+        <div class="form-group">
+          <label for="noticeContentInput">내용</label>
+          <textarea id="noticeContentInput"></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn-primary" onclick="saveNoticeModal()">저장</button>
+          <button class="btn-secondary" onclick="closeNoticeModal()">취소</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const STORAGE_KEY = "inspection_full_demo_data_v1";
+    const SESSION_KEY = "inspection_full_demo_session_v1";
+
+    let importedRows = [];
+    let currentPage = 1;
+    let pageSize = 20;
+    let statusChart, dongChart, lineChart;
+    let householdModalMode = "add";
+    let householdEditIndex = -1;
+    let noticeModalMode = "add";
+    let noticeEditId = null;
+
+    let users = [
+      { id: 1, loginId: "office1", password: "1234", role: "OFFICE", userName: "대구행복아파트 관리사무소", complexIds: ["C001"] },
+      { id: 2, loginId: "office2", password: "1234", role: "OFFICE", userName: "동대구푸르지오 관리사무소", complexIds: ["C002"] },
+      { id: 3, loginId: "fireadmin", password: "1234", role: "FIRE", userName: "소방서 담당자", complexIds: ["C001", "C002"] },
+      { id: 999, loginId: "admin", password: "1234", role: "ADMIN", userName: "시스템관리자", complexIds: ["C001", "C002"] }
+    ];
+
+    let db = {
+      notices: [
+        { id: 1, title: "세대점검 추진 안내", date: "2026-10-01", author: "관리자", authorId: 999, content: "10월 세대점검이 순차적으로 진행됩니다." },
+        { id: 2, title: "공실 세대 관리 기준", date: "2026-10-05", author: "관리자", authorId: 999, content: "공실(미입주) 세대는 점검대상 통계에서 제외합니다." }
+      ],
+      signupRequests: [],
+      complexes: [
+        {
+          complexId: "C001",
+          basicInfo: {
+            complexName: "대구행복아파트",
+            address: "대구광역시 중구 예시로 123",
+            officePhone: "053-123-4567",
+            managerName: "홍길동",
+            inspectionDate: "2026-10-07",
+            memo: "세대점검 추진현황 관리용"
+          },
+          facilities: {
+            selected: ["소화기", "옥내소화전", "자동화재탐지설비", "스프링클러설비", "유도등"],
+            note: "지하주차장 유도등 일부 점검 예정"
+          },
+          households: [
+            { dong: "101", unit: "1001", status: "완료", date: "2026-10-01", note: "정상 점검 완료" },
+            { dong: "101", unit: "1002", status: "부재", date: "", note: "야간 재방문 요청" },
+            { dong: "102", unit: "1203", status: "예정", date: "2026-10-10", note: "사전 연락 완료" },
+            { dong: "103", unit: "502", status: "재방문 필요", date: "2026-10-03", note: "감지기 주변 적치물 정리 필요" },
+            { dong: "104", unit: "901", status: "미동의", date: "", note: "관리사무소 추가 안내 필요" },
+            { dong: "105", unit: "1103", status: "공실(미입주)", date: "", note: "미입주 세대" }
+          ]
+        },
+        {
+          complexId: "C002",
+          basicInfo: {
+            complexName: "동대구푸르지오",
+            address: "대구광역시 동구 예시로 456",
+            officePhone: "053-987-6543",
+            managerName: "이담당",
+            inspectionDate: "2026-10-07",
+            memo: "2단지 점검관리 현황"
+          },
+          facilities: {
+            selected: ["소화기", "옥내소화전", "자동화재탐지설비", "유도등", "완강기"],
+            note: "완강기 교체 검토"
+          },
+          households: [
+            { dong: "201", unit: "101", status: "완료", date: "2026-10-04", note: "정상 점검" },
+            { dong: "201", unit: "102", status: "예정", date: "2026-10-12", note: "주말 방문 협의" },
+            { dong: "202", unit: "1302", status: "완료", date: "2026-10-05", note: "정상 점검" },
+            { dong: "203", unit: "1102", status: "부재", date: "", note: "재연락 필요" },
+            { dong: "204", unit: "1401", status: "공실(미입주)", date: "", note: "공실 확인" }
+          ]
+        }
+      ]
+    };
+
+    let currentUser = null;
+    let currentComplexId = null;
+
+    function saveAll() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ users, db }));
+      const el = document.getElementById("saveStatus");
+      if (el) {
+        el.innerText = "저장 상태: 로컬 저장 완료";
+        setTimeout(() => {
+          const statusEl = document.getElementById("saveStatus");
+          if (statusEl) statusEl.innerText = "저장 상태: 로컬 저장 활성화";
+        }, 1200);
+      }
+    }
+
+    function loadAll() {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.users) users = parsed.users;
+        if (parsed.db) db = parsed.db;
+      }
+    }
+
+    function saveSession() {
+      localStorage.setItem(SESSION_KEY, JSON.stringify({ currentUser, currentComplexId }));
+    }
+
+    function loadSession() {
+      const saved = localStorage.getItem(SESSION_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      currentUser = parsed.currentUser;
+      currentComplexId = parsed.currentComplexId;
+    }
+
+    function clearSession() {
+      localStorage.removeItem(SESSION_KEY);
+    }
+
+    function showLoginPage() {
+      document.getElementById("loginPage").classList.remove("hidden");
+      document.getElementById("registerPage").classList.add("hidden");
+      document.getElementById("appPage").classList.add("hidden");
+    }
+
+    function showRegisterPage() {
+      document.getElementById("loginPage").classList.add("hidden");
+      document.getElementById("registerPage").classList.remove("hidden");
+      document.getElementById("appPage").classList.add("hidden");
+    }
+
+    function login() {
+      const loginId = document.getElementById("loginId").value.trim();
+      const loginPw = document.getElementById("loginPw").value.trim();
+
+      const user = users.find(u => u.loginId === loginId && u.password === loginPw);
+      if (!user) {
+        alert("아이디 또는 비밀번호가 올바르지 않습니다.");
+        return;
+      }
+
+      currentUser = {
+        id: user.id,
+        loginId: user.loginId,
+        role: user.role,
+        userName: user.userName,
+        complexIds: user.complexIds
+      };
+
+      currentComplexId = user.complexIds[0];
+      saveSession();
+      showApp();
+    }
+
+    function logout() {
+      currentUser = null;
+      currentComplexId = null;
+      clearSession();
+      showLoginPage();
+    }
+
+    function registerUser() {
+      const loginId = document.getElementById("regLoginId").value.trim();
+      const password = document.getElementById("regPassword").value.trim();
+      const userName = document.getElementById("regUserName").value.trim();
+      const complexName = document.getElementById("regComplexName").value.trim();
+      const address = document.getElementById("regAddress").value.trim();
+      const officePhone = document.getElementById("regOfficePhone").value.trim();
+      const managerName = document.getElementById("regManagerName").value.trim();
+
+      if (!loginId || !password || !userName || !complexName) {
+        alert("아이디, 비밀번호, 관리사무소명, 아파트명은 필수입니다.");
+        return;
+      }
+
+      if (users.some(u => u.loginId === loginId) || db.signupRequests.some(r => r.loginId === loginId && r.status === "PENDING")) {
+        alert("이미 사용 중이거나 승인 대기 중인 아이디입니다.");
+        return;
+      }
+
+      db.signupRequests.push({
+        requestId: Date.now(),
+        loginId,
+        password,
+        userName,
+        complexName,
+        address,
+        officePhone,
+        managerName,
+        status: "PENDING",
+        requestedAt: new Date().toISOString().slice(0, 10)
+      });
+
+      saveAll();
+      alert("회원가입 신청이 접수되었습니다. 관리자 승인 후 로그인 가능합니다.");
+      showLoginPage();
+    }
+
+    function showApp() {
+      document.getElementById("loginPage").classList.add("hidden");
+      document.getElementById("registerPage").classList.add("hidden");
+      document.getElementById("appPage").classList.remove("hidden");
+
+      bindUserInfo();
+      bindComplexSelector();
+      applyRoleUI();
+      bindCurrentComplexData();
+      restoreChartToggleState();
+      renderTable();
+      updateStats();
+      renderCharts();
+      renderNotices();
+      renderApprovals();
+      showView("dashboardView", document.querySelector(".nav-btn"));
+    }
+
+    function showView(viewId, btn) {
+      ["dashboardView", "statsView", "noticeView", "approvalView"].forEach(id => {
+        document.getElementById(id).classList.add("hidden");
+      });
+      document.getElementById(viewId).classList.remove("hidden");
+
+      document.querySelectorAll(".nav-btn").forEach(el => el.classList.remove("active"));
+      if (btn) btn.classList.add("active");
+
+      if (viewId === "statsView") renderCharts();
+    }
+
+    function bindUserInfo() {
+      let roleText = "사용자";
+      if (currentUser.role === "OFFICE") roleText = "관리사무소";
+      if (currentUser.role === "FIRE") roleText = "소방서 담당자";
+      if (currentUser.role === "ADMIN") roleText = "시스템관리자";
+
+      document.getElementById("userInfoText").innerText = `${roleText} 로그인: ${currentUser.userName}`;
+      document.getElementById("roleGuide").value =
+        currentUser.role === "OFFICE" ? "본인 아파트 조회 및 수정 가능" :
+        currentUser.role === "FIRE" ? "권한 단지 조회 가능 / 조회 전용" :
+        "전체 관리 가능";
+    }
+
+    function getCurrentComplex() {
+      return db.complexes.find(c => c.complexId === currentComplexId);
+    }
+
+    function bindComplexSelector() {
+      const selector = document.getElementById("complexSelector");
+      selector.innerHTML = "";
+
+      const allowed = currentUser.role === "ADMIN"
+        ? db.complexes
+        : db.complexes.filter(c => currentUser.complexIds.includes(c.complexId));
+
+      allowed.forEach(c => {
+        const option = document.createElement("option");
+        option.value = c.complexId;
+        option.textContent = c.basicInfo.complexName;
+        selector.appendChild(option);
+      });
+
+      if (currentUser.role === "OFFICE") {
+        selector.disabled = true;
+        currentComplexId = currentUser.complexIds[0];
+      } else {
+        selector.disabled = false;
+        if (!allowed.some(c => c.complexId === currentComplexId)) {
+          currentComplexId = allowed[0]?.complexId || null;
+        }
+      }
+
+      selector.value = currentComplexId;
+    }
+
+    function changeComplex() {
+      const selectedId = document.getElementById("complexSelector").value;
+
+      const allowed = currentUser.role === "ADMIN"
+        ? db.complexes.map(c => c.complexId)
+        : currentUser.complexIds;
+
+      if (!allowed.includes(selectedId)) {
+        alert("해당 단지에 대한 권한이 없습니다.");
+        return;
+      }
+
+      currentComplexId = selectedId;
+      saveSession();
+      bindCurrentComplexData();
+      currentPage = 1;
+      renderTable();
+      updateStats();
+      renderCharts();
+    }
+
+    function applyRoleUI() {
+      const canEdit = currentUser.role === "OFFICE" || currentUser.role === "ADMIN";
+
+      document.getElementById("saveBasicInfoBtn").disabled = !canEdit;
+      document.getElementById("saveFacilitiesBtn").disabled = !canEdit;
+      document.getElementById("excelUploadBtn").disabled = !canEdit;
+      document.getElementById("addRowBtn").disabled = !canEdit;
+
+      ["complexName", "address", "officePhone", "managerName", "inspectionDate", "memo", "facilityNote"].forEach(id => {
+        document.getElementById(id).readOnly = !canEdit;
+      });
+
+      document.querySelectorAll(".facility").forEach(el => el.disabled = !canEdit);
+
+      document.getElementById("addNoticeBtn").disabled = !(currentUser.role === "OFFICE" || currentUser.role === "ADMIN");
+    }
+
+    function bindCurrentComplexData() {
+      const complex = getCurrentComplex();
+      if (!complex) return;
+
+      document.getElementById("complexName").value = complex.basicInfo.complexName || "";
+      document.getElementById("address").value = complex.basicInfo.address || "";
+      document.getElementById("officePhone").value = complex.basicInfo.officePhone || "";
+      document.getElementById("managerName").value = complex.basicInfo.managerName || "";
+      document.getElementById("inspectionDate").value = complex.basicInfo.inspectionDate || "";
+      document.getElementById("memo").value = complex.basicInfo.memo || "";
+
+      updateHeaderComplexInfo();
+
+      document.querySelectorAll(".facility").forEach(chk => {
+        chk.checked = complex.facilities.selected.includes(chk.value);
+      });
+      document.getElementById("facilityNote").value = complex.facilities.note || "";
+    }
+
+    function updateHeaderComplexInfo() {
+      document.getElementById("complexTitle").innerText = "단지명: " + (document.getElementById("complexName").value || "-");
+      document.getElementById("baseDateText").innerText = "기준일: " + (document.getElementById("inspectionDate").value || "-");
+    }
+
+    function saveBasicInfo() {
+      if (!(currentUser.role === "OFFICE" || currentUser.role === "ADMIN")) {
+        alert("수정 권한이 없습니다.");
+        return;
+      }
+
+      const complex = getCurrentComplex();
+      if (!complex) return;
+
+      complex.basicInfo = {
+        complexName: document.getElementById("complexName").value,
+        address: document.getElementById("address").value,
+        officePhone: document.getElementById("officePhone").value,
+        managerName: document.getElementById("managerName").value,
+        inspectionDate: document.getElementById("inspectionDate").value,
+        memo: document.getElementById("memo").value
+      };
+
+      if (currentUser.role === "OFFICE") {
+        currentUser.userName = `${complex.basicInfo.complexName} 관리사무소`;
+        const user = users.find(u => u.id === currentUser.id);
+        if (user) user.userName = currentUser.userName;
+        document.getElementById("userInfoText").innerText = `관리사무소 로그인: ${currentUser.userName}`;
+      }
+
+      saveAll();
+      saveSession();
+      bindComplexSelector();
+      updateHeaderComplexInfo();
+      alert("기본정보가 저장되었습니다.");
+    }
+
+    function saveFacilities() {
+      if (!(currentUser.role === "OFFICE" || currentUser.role === "ADMIN")) {
+        alert("수정 권한이 없습니다.");
+        return;
+      }
+
+      const complex = getCurrentComplex();
+      if (!complex) return;
+
+      complex.facilities = {
+        selected: [...document.querySelectorAll(".facility:checked")].map(el => el.value),
+        note: document.getElementById("facilityNote").value
+      };
+
+      saveAll();
+      alert("소방시설 현황이 저장되었습니다.");
+    }
+
+    function getCurrentHouseholds() {
+      return getCurrentComplex()?.households || [];
+    }
+
+    function isVacant(row) {
+      return row.status === "공실(미입주)";
+    }
+
+    function normalizeStatus(status) {
+      const allowed = ["완료", "예정", "부재", "재방문 필요", "미동의", "공실(미입주)"];
+      return allowed.includes(status) ? status : "예정";
+    }
+
+    function getStatusClass(status) {
+      switch (status) {
+        case "완료": return "done";
+        case "예정": return "planned";
+        case "부재": return "absent";
+        case "재방문 필요": return "revisit";
+        case "미동의": return "refused";
+        case "공실(미입주)": return "vacant";
+        default: return "";
+      }
+    }
+
+    function getLineFromUnit(unit) {
+      const str = String(unit || "").trim();
+      return str.length >= 2 ? str.slice(-2) + "라인" : (str || "-") + "라인";
+    }
+
+    function updateStats() {
+      const households = getCurrentHouseholds();
+      const total = households.length;
+      const vacant = households.filter(isVacant).length;
+      const targets = households.filter(h => !isVacant(h));
+      const targetCount = targets.length;
+      const completed = targets.filter(h => h.status === "완료").length;
+      const pending = targets.filter(h => h.status !== "완료").length;
+      const rate = targetCount ? Math.round((completed / targetCount) * 100) : 0;
+
+      document.getElementById("totalHouseholds").innerText = total;
+      document.getElementById("vacantHouseholds").innerText = vacant;
+      document.getElementById("targetHouseholds").innerText = targetCount;
+      document.getElementById("completedHouseholds").innerText = completed;
+      document.getElementById("pendingHouseholds").innerText = pending;
+      document.getElementById("progressRate").innerText = rate + "%";
+    }
+
+    function getFilteredRows() {
+      const keyword = document.getElementById("searchInput").value.trim();
+      const statusFilter = document.getElementById("statusFilter").value;
+
+      return getCurrentHouseholds().filter(item => {
+        const matchKeyword =
+          !keyword ||
+          String(item.dong).includes(keyword) ||
+          String(item.unit).includes(keyword) ||
+          String(item.note).includes(keyword);
+
+        const matchStatus = !statusFilter || item.status === statusFilter;
+        return matchKeyword && matchStatus;
+      });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById("inspectionTableBody");
+      const rows = getFilteredRows();
+      tbody.innerHTML = "";
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:30px;">검색 결과가 없습니다.</td></tr>`;
+        document.getElementById("pageInfo").innerText = "0건";
+        updateStats();
+        renderCharts();
+        return;
+      }
+
+      const totalPages = Math.max(1, Math.ceil(rows.length / pageSize));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const start = (currentPage - 1) * pageSize;
+      const end = start + pageSize;
+
+      rows.slice(start, end).forEach(item => {
+        const realIndex = getCurrentHouseholds().findIndex(h =>
+          h.dong == item.dong &&
+          h.unit == item.unit &&
+          h.status == item.status &&
+          h.date == item.date &&
+          h.note == item.note
+        );
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${item.dong || "-"}</td>
+          <td>${item.unit || "-"}</td>
+          <td>${getLineFromUnit(item.unit)}</td>
+          <td><span class="badge ${getStatusClass(item.status)}">${item.status || "-"}</span></td>
+          <td>${item.date || "-"}</td>
+          <td>${item.note || "-"}</td>
+          <td class="action-col">
+            ${(currentUser.role === "OFFICE" || currentUser.role === "ADMIN")
+              ? `<button class="btn-secondary" onclick="openHouseholdModal('edit', ${realIndex})">수정</button>
+                 <button class="btn-danger" onclick="deleteRow(${realIndex})">삭제</button>`
+              : `조회 전용`
+            }
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      document.getElementById("pageInfo").innerText = `총 ${rows.length}건 / ${currentPage}페이지 / 페이지당 ${pageSize}건`;
+      updateStats();
+      renderCharts();
+    }
+
+    function changePage(direction) {
+      const totalPages = Math.max(1, Math.ceil(getFilteredRows().length / pageSize));
+      currentPage += direction;
+      if (currentPage < 1) currentPage = 1;
+      if (currentPage > totalPages) currentPage = totalPages;
+      renderTable();
+    }
+
+    function changePageSize() {
+      pageSize = Number(document.getElementById("pageSize").value);
+      currentPage = 1;
+      renderTable();
+    }
+
+    function openHouseholdModal(mode, index = -1) {
+      if (!(currentUser.role === "OFFICE" || currentUser.role === "ADMIN")) {
+        alert("수정 권한이 없습니다.");
+        return;
+      }
+
+      householdModalMode = mode;
+      householdEditIndex = index;
+      document.getElementById("householdModalTitle").innerText = mode === "add" ? "세대 추가" : "세대 수정";
+
+      if (mode === "add") {
+        document.getElementById("modalDong").value = "";
+        document.getElementById("modalUnit").value = "";
+        document.getElementById("modalStatus").value = "예정";
+        document.getElementById("modalDate").value = "";
+        document.getElementById("modalNote").value = "";
+      } else {
+        const row = getCurrentHouseholds()[index];
+        if (!row) return;
+        document.getElementById("modalDong").value = row.dong || "";
+        document.getElementById("modalUnit").value = row.unit || "";
+        document.getElementById("modalStatus").value = row.status || "예정";
+        document.getElementById("modalDate").value = row.date || "";
+        document.getElementById("modalNote").value = row.note || "";
+      }
+
+      document.getElementById("householdModal").classList.add("show");
+    }
+
+    function closeHouseholdModal() {
+      document.getElementById("householdModal").classList.remove("show");
+    }
+
+    function saveHouseholdModal() {
+      const dong = document.getElementById("modalDong").value.trim();
+      const unit = document.getElementById("modalUnit").value.trim();
+      const status = normalizeStatus(document.getElementById("modalStatus").value);
+      const date = document.getElementById("modalDate").value;
+      const note = document.getElementById("modalNote").value.trim();
+
+      if (!dong || !unit) {
+        alert("동과 호수는 필수입니다.");
+        return;
+      }
+
+      const payload = { dong, unit, status, date, note };
+      const complex = getCurrentComplex();
+
+      if (householdModalMode === "add") {
+        complex.households.push(payload);
+      } else if (householdEditIndex > -1) {
+        complex.households[householdEditIndex] = payload;
+      }
+
+      saveAll();
+      closeHouseholdModal();
+      renderTable();
+    }
+
+    function deleteRow(index) {
+      if (!(currentUser.role === "OFFICE" || currentUser.role === "ADMIN")) {
+        alert("삭제 권한이 없습니다.");
+        return;
+      }
+
+      if (!confirm("해당 세대를 삭제하시겠습니까?")) return;
+      getCurrentComplex().households.splice(index, 1);
+      saveAll();
+      renderTable();
+    }
+
+    function openNoticeModal(mode, noticeId = null) {
+      if (!(currentUser.role === "OFFICE" || currentUser.role === "ADMIN")) {
+        alert("공지 등록 권한이 없습니다.");
+        return;
+      }
+
+      noticeModalMode = mode;
+      noticeEditId = noticeId;
+      document.getElementById("noticeModalTitle").innerText = mode === "add" ? "공지 추가" : "공지 수정";
+
+      if (mode === "add") {
+        document.getElementById("noticeTitleInput").value = "";
+        document.getElementById("noticeContentInput").value = "";
+      } else {
+        const item = db.notices.find(n => n.id === noticeId);
+        if (!item) return;
+        document.getElementById("noticeTitleInput").value = item.title;
+        document.getElementById("noticeContentInput").value = item.content;
+      }
+
+      document.getElementById("noticeModal").classList.add("show");
+    }
+
+    function closeNoticeModal() {
+      document.getElementById("noticeModal").classList.remove("show");
+    }
+
+    function saveNoticeModal() {
+      const title = document.getElementById("noticeTitleInput").value.trim();
+      const content = document.getElementById("noticeContentInput").value.trim();
+
+      if (!title || !content) {
+        alert("제목과 내용을 입력하세요.");
+        return;
+      }
+
+      if (noticeModalMode === "add") {
+        db.notices.push({
+          id: Date.now(),
+          title,
+          content,
+          author: currentUser.userName,
+          authorId: currentUser.id,
+          date: new Date().toISOString().slice(0, 10)
+        });
+      } else {
+        const item = db.notices.find(n => n.id === noticeEditId);
+        if (!item) return;
+
+        if (!(currentUser.role === "ADMIN" || item.authorId === currentUser.id)) {
+          alert("수정 권한이 없습니다.");
+          return;
+        }
+
+        item.title = title;
+        item.content = content;
+      }
+
+      saveAll();
+      closeNoticeModal();
+      renderNotices();
+    }
+
+    function deleteNotice(noticeId) {
+      const item = db.notices.find(n => n.id === noticeId);
+      if (!item) return;
+
+      if (!(currentUser.role === "ADMIN" || item.authorId === currentUser.id)) {
+        alert("삭제 권한이 없습니다.");
+        return;
+      }
+
+      if (!confirm("공지사항을 삭제하시겠습니까?")) return;
+      db.notices = db.notices.filter(n => n.id !== noticeId);
+      saveAll();
+      renderNotices();
+    }
+
+    function renderNotices() {
+      const list = document.getElementById("noticeList");
+      list.innerHTML = "";
+
+      if (!db.notices.length) {
+        list.innerHTML = `<div class="mini">등록된 공지사항이 없습니다.</div>`;
+        return;
+      }
+
+      db.notices.slice().sort((a, b) => b.date.localeCompare(a.date)).forEach(notice => {
+        const canEdit = currentUser.role === "ADMIN" || notice.authorId === currentUser.id;
+        const div = document.createElement("div");
+        div.className = "notice-item";
+        div.innerHTML = `
+          <div class="notice-title">${notice.title}</div>
+          <div class="notice-meta">${notice.date} / ${notice.author}</div>
+          <div>${notice.content}</div>
+          ${canEdit ? `
+            <div class="btn-row no-print">
+              <button class="btn-secondary" onclick="openNoticeModal('edit', ${notice.id})">수정</button>
+              <button class="btn-danger" onclick="deleteNotice(${notice.id})">삭제</button>
+            </div>
+          ` : ``}
+        `;
+        list.appendChild(div);
+      });
+    }
+
+    function renderApprovals() {
+      const tbody = document.getElementById("approvalTableBody");
+      tbody.innerHTML = "";
+
+      if (currentUser.role !== "ADMIN") {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px;">관리자만 조회할 수 있습니다.</td></tr>`;
+        return;
+      }
+
+      if (!db.signupRequests.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding:30px;">승인 대기 회원가입 신청이 없습니다.</td></tr>`;
+        return;
+      }
+
+      db.signupRequests.forEach(req => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${req.loginId}</td>
+          <td>${req.userName}</td>
+          <td>${req.complexName}</td>
+          <td>${req.status}</td>
+          <td>${req.requestedAt}</td>
+          <td class="action-col">
+            ${req.status === "PENDING" ? `
+              <button class="btn-success" onclick="approveSignup(${req.requestId})">승인</button>
+              <button class="btn-danger" onclick="rejectSignup(${req.requestId})">반려</button>
+            ` : `처리완료`}
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function approveSignup(requestId) {
+      const req = db.signupRequests.find(r => r.requestId === requestId);
+      if (!req) return;
+
+      if (users.some(u => u.loginId === req.loginId)) {
+        alert("이미 사용 중인 아이디입니다.");
+        req.status = "REJECTED";
+        saveAll();
+        renderApprovals();
+        return;
+      }
+
+      const complexId = "C" + String(Date.now()).slice(-6);
+      db.complexes.push({
+        complexId,
+        basicInfo: {
+          complexName: req.complexName,
+          address: req.address || "",
+          officePhone: req.officePhone || "",
+          managerName: req.managerName || "",
+          inspectionDate: "",
+          memo: ""
+        },
+        facilities: { selected: [], note: "" },
+        households: []
+      });
+
+      users.push({
+        id: Date.now(),
+        loginId: req.loginId,
+        password: req.password,
+        role: "OFFICE",
+        userName: req.userName,
+        complexIds: [complexId]
+      });
+
+      req.status = "APPROVED";
+      saveAll();
+      renderApprovals();
+      alert("회원가입이 승인되었습니다.");
+    }
+
+    function rejectSignup(requestId) {
+      const req = db.signupRequests.find(r => r.requestId === requestId);
+      if (!req) return;
+      req.status = "REJECTED";
+      saveAll();
+      renderApprovals();
+      alert("회원가입이 반려되었습니다.");
+    }
+
+    function openUploadModal() {
+      if (!(currentUser.role === "OFFICE" || currentUser.role === "ADMIN")) {
+        alert("업로드 권한이 없습니다.");
+        return;
+      }
+      document.getElementById("uploadModal").classList.add("show");
+    }
+
+    function closeUploadModal() {
+      document.getElementById("uploadModal").classList.remove("show");
+    }
+
+    function setProgress(percent, text) {
+      document.getElementById("uploadProgressBar").style.width = percent + "%";
+      document.getElementById("uploadProgressText").innerText = text;
+    }
+
+    function excelDateToJSDate(serial) {
+      const utcDays = Math.floor(serial - 25569);
+      const utcValue = utcDays * 86400;
+      const dateInfo = new Date(utcValue * 1000);
+      const year = dateInfo.getUTCFullYear();
+      const month = String(dateInfo.getUTCMonth() + 1).padStart(2, "0");
+      const day = String(dateInfo.getUTCDate()).padStart(2, "0");
+      return `${year}-${month}-${day}`;
+    }
+
+    function normalizeExcelDate(value) {
+      if (value === null || value === undefined || value === "") return "";
+      if (typeof value === "number") return excelDateToJSDate(value);
+
+      const str = String(value).trim();
+
+      if (/^\d+(\.\d+)?$/.test(str)) return excelDateToJSDate(Number(str));
+      if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+      if (/^\d{4}\.\d{1,2}\.\d{1,2}$/.test(str)) {
+        const p = str.split(".");
+        return `${p[0]}-${String(p[1]).padStart(2, "0")}-${String(p[2]).padStart(2, "0")}`;
+      }
+      if (/^\d{4}\/\d{1,2}\/\d{1,2}$/.test(str)) {
+        const p = str.split("/");
+        return `${p[0]}-${String(p[1]).padStart(2, "0")}-${String(p[2]).padStart(2, "0")}`;
+      }
+      return str;
+    }
+
+    function mapExcelRow(row) {
+      return {
+        dong: String(row["동"] ?? "").trim(),
+        unit: String(row["호수"] ?? "").trim(),
+        status: normalizeStatus(String(row["점검상태"] ?? "").trim()),
+        date: normalizeExcelDate(row["점검일"] ?? ""),
+        note: String(row["특이사항"] ?? "").trim()
+      };
+    }
+
+    function validateImportedRows(rows) {
+      const validRows = [];
+      const warnings = [];
+
+      rows.forEach((row, idx) => {
+        const mapped = mapExcelRow(row);
+
+        if (!mapped.dong && !mapped.unit && !mapped.note) return;
+
+        if (!mapped.dong || !mapped.unit) {
+          warnings.push(`${idx + 2}행: 동 또는 호수가 없어 제외됨`);
+          return;
+        }
+
+        if (mapped.status === "공실(미입주)" && mapped.date) {
+          warnings.push(`${idx + 2}행: 공실 세대의 점검일은 비우는 것을 권장`);
+        }
+
+        validRows.push(mapped);
+      });
+
+      return { validRows, warnings };
+    }
+
+    function showImportPreview(rows) {
+      const tbody = document.getElementById("previewTableBody");
+      tbody.innerHTML = "";
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">미리보기 데이터가 없습니다.</td></tr>`;
+        return;
+      }
+
+      rows.slice(0, 50).forEach(row => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${row.dong || "-"}</td>
+          <td>${row.unit || "-"}</td>
+          <td>${row.status || "-"}</td>
+          <td>${row.date || "-"}</td>
+          <td>${row.note || "-"}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      if (rows.length > 50) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td colspan="5" style="text-align:center;">총 ${rows.length}건 중 50건만 미리보기로 표시됩니다.</td>`;
+        tbody.appendChild(tr);
+      }
+    }
+
+    function readExcelFile() {
+      const file = document.getElementById("excelFile").files[0];
+      if (!file) {
+        alert("업로드할 파일을 먼저 선택하세요.");
+        return;
+      }
+
+      setProgress(10, "파일 읽는 중...");
+      document.getElementById("importWarn").style.display = "none";
+
+      const reader = new FileReader();
+
+      reader.onload = function(e) {
+        setTimeout(() => setProgress(30, "시트 분석 중..."), 150);
+
+        setTimeout(() => {
+          const workbook = XLSX.read(e.target.result, { type: "binary", cellDates: true });
+          const ws = workbook.Sheets[workbook.SheetNames[0]];
+          const jsonData = XLSX.utils.sheet_to_json(ws, { defval: "", raw: true });
+
+          setProgress(60, "데이터 검증 중...");
+
+          const requiredColumns = ["동", "호수"];
+          const firstRow = jsonData[0] || {};
+          const missing = requiredColumns.filter(col => !(col in firstRow));
+
+          if (!jsonData.length) {
+            setProgress(100, "빈 파일");
+            importedRows = [];
+            document.getElementById("importInfo").innerText = "업로드 파일에 데이터가 없습니다.";
+            showImportPreview([]);
+            return;
+          }
+
+          if (missing.length) {
+            setProgress(100, "필수 컬럼 누락");
+            document.getElementById("importInfo").innerText = "필수 컬럼이 누락되었습니다.";
+            document.getElementById("importWarn").style.display = "block";
+            document.getElementById("importWarn").innerText = "누락 컬럼: " + missing.join(", ");
+            importedRows = [];
+            showImportPreview([]);
+            return;
+          }
+
+          const result = validateImportedRows(jsonData);
+          importedRows = result.validRows;
+
+          setProgress(100, `파일 읽기 완료 (${importedRows.length}건)`);
+          document.getElementById("importInfo").innerText = `총 ${jsonData.length}건 중 ${importedRows.length}건을 업로드 대상으로 인식했습니다.`;
+
+          if (result.warnings.length) {
+            document.getElementById("importWarn").style.display = "block";
+            document.getElementById("importWarn").innerText =
+              result.warnings.slice(0, 10).join(" / ") +
+              (result.warnings.length > 10 ? ` 외 ${result.warnings.length - 10}건` : "");
+          }
+
+          showImportPreview(importedRows);
+        }, 350);
+      };
+
+      reader.readAsBinaryString(file);
+    }
+
+    function buildKey(item) {
+      return `${item.dong}__${item.unit}`;
+    }
+
+    function getDuplicateCount(existing, incoming) {
+      const set = new Set(existing.map(buildKey));
+      let count = 0;
+      incoming.forEach(item => {
+        if (set.has(buildKey(item))) count++;
+      });
+      return count;
+    }
+
+    function applyImportedData(mode) {
+      if (!(currentUser.role === "OFFICE" || currentUser.role === "ADMIN")) {
+        alert("업로드 권한이 없습니다.");
+        return;
+      }
+
+      if (!importedRows.length) {
+        alert("먼저 파일을 읽어 업로드 대상 데이터를 준비하세요.");
+        return;
+      }
+
+      const complex = getCurrentComplex();
+
+      if (mode === "append") {
+        const duplicateCount = getDuplicateCount(complex.households, importedRows);
+        if (!confirm(`총 ${importedRows.length}건을 추가합니다.\n중복 추정 ${duplicateCount}건이 있습니다.\n계속하시겠습니까?`)) return;
+        complex.households = [...complex.households, ...importedRows];
+      }
+
+      if (mode === "replace") {
+        if (!confirm(`기존 ${complex.households.length}건을 삭제하고 ${importedRows.length}건으로 전체 대체하시겠습니까?`)) return;
+        complex.households = [...importedRows];
+      }
+
+      if (mode === "upsert") {
+        if (!confirm("동-호수 기준으로 기존 세대는 업데이트하고, 없는 세대는 신규 추가합니다. 계속하시겠습니까?")) return;
+        const map = new Map(complex.households.map(item => [buildKey(item), item]));
+        importedRows.forEach(row => map.set(buildKey(row), row));
+        complex.households = Array.from(map.values());
+      }
+
+      saveAll();
+      currentPage = 1;
+      renderTable();
+      document.getElementById("importInfo").innerText = `반영 완료: 현재 총 ${complex.households.length}세대가 등록되어 있습니다.`;
+      alert("엑셀 데이터가 반영되었습니다.");
+      closeUploadModal();
+    }
+
+    function downloadCSV() {
+      const headers = ["동", "호수", "점검상태", "점검일", "특이사항"];
+      const rows = getCurrentHouseholds().map(h => [h.dong, h.unit, h.status, h.date, h.note]);
+
+      const csv = [headers, ...rows]
+        .map(row => row.map(field => `"${String(field || "").replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "공동주택_세대점검_현황.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function downloadTemplateCSV() {
+      const headers = ["동", "호수", "점검상태", "점검일", "특이사항"];
+      const rows = [
+        ["101", "1001", "완료", "2026-10-01", "정상 점검 완료"],
+        ["101", "1002", "부재", "", "야간 재방문 요청"],
+        ["102", "1203", "예정", "2026-10-10", "사전 연락 완료"],
+        ["105", "1103", "공실(미입주)", "", "미입주 세대"]
+      ];
+
+      const csv = [headers, ...rows]
+        .map(row => row.map(field => `"${String(field || "").replace(/"/g, '""')}"`).join(","))
+        .join("\n");
+
+      const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "세대점검_업로드양식.csv";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function loadSampleData() {
+      if (!(currentUser.role === "OFFICE" || currentUser.role === "ADMIN")) {
+        alert("추가 권한이 없습니다.");
+        return;
+      }
+
+      if (!confirm("샘플데이터를 현재 단지에 추가하시겠습니까?")) return;
+
+      getCurrentComplex().households.push(
+        { dong: "105", unit: "1501", status: "완료", date: "2026-10-04", note: "소화기 위치 안내 완료" },
+        { dong: "106", unit: "602", status: "예정", date: "2026-10-12", note: "주말 방문 협의" },
+        { dong: "107", unit: "703", status: "공실(미입주)", date: "", note: "공실 세대" }
+      );
+
+      saveAll();
+      renderTable();
+    }
+
+    function resetCurrentComplex() {
+      if (!(currentUser.role === "OFFICE" || currentUser.role === "ADMIN")) {
+        alert("초기화 권한이 없습니다.");
+        return;
+      }
+
+      if (!confirm("현재 단지의 세대 데이터를 초기화하시겠습니까?")) return;
+      getCurrentComplex().households = [];
+      saveAll();
+      renderTable();
+    }
+
+    function toggleChartSection(sectionId) {
+      const section = document.getElementById(sectionId);
+      const button = document.getElementById("toggleBtn_" + sectionId);
+      if (!section || !button) return;
+
+      section.classList.toggle("chart-collapsed");
+      const collapsed = section.classList.contains("chart-collapsed");
+      button.innerText = collapsed ? "펼치기" : "접기";
+      localStorage.setItem("toggle_" + sectionId, collapsed ? "Y" : "N");
+    }
+
+    function restoreChartToggleState() {
+      ["statusSection", "dongSection", "lineSection"].forEach(id => {
+        const section = document.getElementById(id);
+        const button = document.getElementById("toggleBtn_" + id);
+        if (!section || !button) return;
+
+        const collapsed = localStorage.getItem("toggle_" + id) === "Y";
+        section.classList.toggle("chart-collapsed", collapsed);
+        button.innerText = collapsed ? "펼치기" : "접기";
+      });
+    }
+
+    function renderCharts() {
+      const rows = getFilteredRows();
+
+      const statusMap = {
+        "완료": 0,
+        "예정": 0,
+        "부재": 0,
+        "재방문 필요": 0,
+        "미동의": 0,
+        "공실(미입주)": 0
+      };
+      rows.forEach(r => statusMap[r.status] = (statusMap[r.status] || 0) + 1);
+
+      const dongMap = {};
+      rows.forEach(r => {
+        if (!dongMap[r.dong]) dongMap[r.dong] = { total: 0, completed: 0 };
+        if (!isVacant(r)) {
+          dongMap[r.dong].total++;
+          if (r.status === "완료") dongMap[r.dong].completed++;
+        }
+      });
+
+      const dongLabels = Object.keys(dongMap).sort((a, b) => Number(a) - Number(b));
+      const dongRates = dongLabels.map(d => {
+        const item = dongMap[d];
+        return item.total ? Math.round((item.completed / item.total) * 100) : 0;
+      });
+
+      const lineMap = {};
+      rows.forEach(r => {
+        const line = getLineFromUnit(r.unit);
+        lineMap[line] = (lineMap[line] || 0) + 1;
+      });
+
+      const lineLabels = Object.keys(lineMap).sort();
+      const lineValues = lineLabels.map(key => lineMap[key]);
+
+      if (statusChart) statusChart.destroy();
+      if (dongChart) dongChart.destroy();
+      if (lineChart) lineChart.destroy();
+
+      statusChart = new Chart(document.getElementById("statusChart"), {
+        type: "doughnut",
+        data: {
+          labels: Object.keys(statusMap),
+          datasets: [{
+            data: Object.values(statusMap),
+            backgroundColor: ["#1e8449", "#2e86de", "#d68910", "#c0392b", "#8e44ad", "#9ca3af"]
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      dongChart = new Chart(document.getElementById("dongChart"), {
+        type: "bar",
+        data: {
+          labels: dongLabels,
+          datasets: [{
+            label: "동별 완료율(%)",
+            data: dongRates,
+            backgroundColor: "#2e86de"
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true, max: 100 } }
+        }
+      });
+
+      lineChart = new Chart(document.getElementById("lineChart"), {
+        type: "bar",
+        data: {
+          labels: lineLabels,
+          datasets: [{
+            label: "라인별 세대 수",
+            data: lineValues,
+            backgroundColor: "#6c5ce7"
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    function initHeaderLiveUpdate() {
+      document.getElementById("complexName").addEventListener("input", updateHeaderComplexInfo);
+      document.getElementById("inspectionDate").addEventListener("input", updateHeaderComplexInfo);
+    }
+
+    function init() {
+      loadAll();
+      loadSession();
+      initHeaderLiveUpdate();
+
+      if (currentUser) {
+        showApp();
+      } else {
+        showLoginPage();
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>
